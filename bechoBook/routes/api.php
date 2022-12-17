@@ -7,12 +7,9 @@ use App\Http\Controllers\BookController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomController;
 use App\Http\Controllers\OrdersController;
-use App\Http\Controllers\PdfController;
 use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\RewardsController;
-use App\Http\Controllers\SubCategoryController;
 use App\Http\Controllers\UserController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*

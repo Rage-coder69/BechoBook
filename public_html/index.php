@@ -16,7 +16,7 @@ define('LARAVEL_START', microtime(true));
 |
 */
 
-if (file_exists($maintenance = __DIR__.'/../bookBecho/storage/framework/maintenance.php')) {
+if (file_exists($maintenance = __DIR__.'/../bechoBook/storage/framework/maintenance.php')) {
     require $maintenance;
 }
 
@@ -31,7 +31,7 @@ if (file_exists($maintenance = __DIR__.'/../bookBecho/storage/framework/maintena
 |
 */
 
-require __DIR__.'/../bookBecho/vendor/autoload.php';
+require __DIR__.'/../bechoBook/vendor/autoload.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -44,7 +44,7 @@ require __DIR__.'/../bookBecho/vendor/autoload.php';
 |
 */
 
-$app = require_once __DIR__.'/../bookBecho/bootstrap/app.php';
+$app = require_once __DIR__.'/../bechoBook/bootstrap/app.php';
 
 $kernel = $app->make(Kernel::class);
 
