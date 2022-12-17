@@ -62,4 +62,5 @@ Route::post('/deleteProduct', [ProductsController::class, 'destroy'])->name('del
 
 Route::post('/addOrder', [OrdersController::class, 'store'])->name('addOrder');
 Route::get('/getOrders', [OrdersController::class, 'index'])->name('getOrders');
+Route::post('/getUserOrders', [OrdersController::class, 'getUserOrders'])->name('getUserOrders');
 Route::post('/changeOrderStatus', [OrdersController::class, 'changeStatus'])->name('changeOrderStatus');

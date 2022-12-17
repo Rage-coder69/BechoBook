@@ -10,7 +10,7 @@ class OrdersController extends Controller
 {
     public function index()
     {
-        $orders = Orders::with('users')->get();
+        $orders = Orders::with('users', 'products')->get();
         return response()->json([
             'orders' => $orders
         ], 200);
@@ -26,6 +26,7 @@ class OrdersController extends Controller
             'state' => 'required',
             'pincode' => 'required',
             'phone_number' => 'required',
+            'product_id' => 'required',
             'order_status' => 'required',
         ];
         $validate = Validator::make($request->all(), $rules);
@@ -39,8 +40,14 @@ class OrdersController extends Controller
     }
 
     public function getUserOrders(Request $request) {
-        $user_id = $request->user_id;
-        $orders = Orders::with('users')->where('user_id', $user_id)->get();
+        $rules = [
+            'user_id' => 'required',
+        ];
+        $validate = Validator::make($request->all(), $rules);
+        if ($validate->fails()) {
+            return response()->json(['error' => $validate->errors()], 401);
+        }
+        $orders = Orders::with('users')->where('user_id', $request->user_id)->get();
         return response()->json([
             'orders' => $orders
         ], 200);
@@ -48,6 +55,14 @@ class OrdersController extends Controller
 
     public function changeStatus(Request $request)
     {
+        $rules = [
+            'id' => 'required',
+            'order_status' => 'required',
+        ];
+        $validate = Validator::make($request->all(), $rules);
+        if ($validate->fails()) {
+            return response()->json(['error' => $validate->errors()], 401);
+        }
         $order = Orders::findOrFail($request->id);
         $order->update(['order_status' => $request->order_status]);
         return response()->json([

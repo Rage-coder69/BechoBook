@@ -32,6 +32,13 @@ class RewardsController extends Controller
     }
 
     public function getUserReward(Request $request){
+        $rules = [
+            'user_id' => 'required',
+        ];
+        $validate = Validator::make($request->all(), $rules);
+        if ($validate->fails()) {
+            return response()->json(['error' => $validate->errors()], 401);
+        }
         $reward = Rewards::with('user')->where('user_id', $request->user_id)->get();
         $totalRewardAmount = Rewards::where('user_id', $request->user_id)->sum('reward_amount');
         return response()->json(['reward' => $reward, 'totalRewardAmount' => $totalRewardAmount], 200);

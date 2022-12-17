@@ -39,6 +39,13 @@ class ProductsController extends Controller
 
     public function destroy(Request $request)
     {
+        $rules = [
+            'id' => 'required',
+        ];
+        $validate = Validator::make($request->all(), $rules);
+        if ($validate->fails()) {
+            return response()->json(['error' => $validate->errors()], 401);
+        }
         $product = Products::findOrFail($request->id);
         $product->delete();
         return response()->json([

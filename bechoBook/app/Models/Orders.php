@@ -12,6 +12,13 @@ class Orders extends Model
 
     public function users()
     {
-        return $this->belongsTo('App\Models\User');
+        return $this->belongsTo(User::class);
     }
+
+    public function products()
+    {
+        return $this->hasMany(Products::class);
+    }
+
+
 }
