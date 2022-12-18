@@ -22,7 +22,6 @@ return new class extends Migration
             $table->string('state');
             $table->string('pincode');
             $table->string('phone_number');
-            $table->foreignId('product_id')->constrained("products");
             $table->string('order_status');
             $table->timestamps();
         });
