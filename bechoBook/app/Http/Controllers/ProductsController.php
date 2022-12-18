@@ -28,10 +28,17 @@ class ProductsController extends Controller
         if ($validate->fails()) {
             return response()->json(['error' => $validate->errors()], 401);
         }
+        $product = new Products();
+
         $image_name = time() . $request->file('product_image')->getClientOriginalName();
-        $request->product_image->move('storage/products', $image_name);
-        $request->merge(['product_image' => 'storage/products/' . $image_name]);
-        $product = Products::create($request->all());
+        $request->file('product_image')->move('storage/products', $image_name);
+
+        $product->product_image = 'storage/products/' . $image_name;
+        $product->product_name = $request->product_name;
+        $product->product_description = $request->product_description;
+        $product->product_amount = $request->product_amount;
+        $product->save();
+        
         return response()->json([
             'product' => $product
         ], 200);

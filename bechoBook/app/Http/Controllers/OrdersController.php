@@ -33,6 +33,7 @@ class OrdersController extends Controller
         if ($validate->fails()) {
             return response()->json(['error' => $validate->errors()], 401);
         }
+
         $order = Orders::create($request->all());
         return response()->json([
             'order' => $order
