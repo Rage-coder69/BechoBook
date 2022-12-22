@@ -60,7 +60,7 @@ class RewardsController extends Controller
                 ], 401);
         }
         $rewards = Rewards::with('user')->where('user_id', $request->user_id)->get();
-        $totalRewardAmount = User::where('user_id', $request->user_id)->get('total_rewards');
+        $totalRewardAmount = User::where('id', $request->user_id)->get('total_rewards');
 
         return response()->json(['reward' => $rewards, 'total_rewards' => $totalRewardAmount,
             'success' => true,
