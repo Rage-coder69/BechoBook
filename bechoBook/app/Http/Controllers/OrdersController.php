@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Ordered_products;
 use App\Models\Orders;
+use App\Models\Products;
+use App\Models\Rewards;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -10,9 +14,11 @@ class OrdersController extends Controller
 {
     public function index()
     {
-        $orders = Orders::with('users', 'products')->get();
+        $orders = Orders::with('user', 'orderedProduct')->get();
         return response()->json([
-            'orders' => $orders
+            'message' => 'Orders fetched successfully',
+            'orders' => $orders,
+            'success' => true
         ], 200);
     }
 
@@ -34,10 +40,43 @@ class OrdersController extends Controller
             return response()->json(['error' => $validate->errors()], 401);
         }
 
-        $order = Orders::create($request->all());
-        return response()->json([
-            'order' => $order
-        ], 200);
+        // check if the user has sufficient reward points to order the product
+        $userRewardData = User::findOrFail($request->user_id);
+        $product = Products::findOrFail($request->product_id);
+        if ($userRewardData->total_rewards >= $product->product_amount) {
+            // subtract the reward points from the user's reward points
+            User::where('id', '=', $request->user_id)->update([
+                'total_rewards' => $userRewardData->total_rewards - $product->product_amount
+            ]);
+        } else {
+            return response()->json(['message' => 'Insufficient reward points',
+                'success' => false], 401);
+        }
+
+        $order = Orders::create([
+            'user_id' => $request->user_id,
+            'user_name' => $request->user_name,
+            'product_id' => $request->product_id,
+            'street_address' => $request->street_address,
+            'district' => $request->district,
+            'state' => $request->state,
+            'pincode' => $request->pincode,
+            'phone_number' => $request->phone_number,
+            'order_status' => $request->order_status,
+        ]);
+
+        if ($order) {
+            return response()->json([
+                'message' => 'Order created successfully',
+                'order' => $order,
+                'success' => true
+            ], 200);
+        } else {
+            return response()->json([
+                'message' => 'Order creation failed',
+                'success' => false
+            ], 401);
+        }
     }
 
     public function getUserOrders(Request $request) {
@@ -46,11 +85,13 @@ class OrdersController extends Controller
         ];
         $validate = Validator::make($request->all(), $rules);
         if ($validate->fails()) {
-            return response()->json(['error' => $validate->errors()], 401);
+            return response()->json(['error' => $validate->errors(),
+                'success' => false], 401);
         }
-        $orders = Orders::with('users')->where('user_id', $request->user_id)->get();
+        $orders = Orders::with('user')->where('user_id', $request->user_id)->get();
         return response()->json([
-            'orders' => $orders
+            'orders' => $orders,
+            'success' => true
         ], 200);
     }
 
@@ -67,7 +108,9 @@ class OrdersController extends Controller
         $order = Orders::findOrFail($request->id);
         $order->update(['order_status' => $request->order_status]);
         return response()->json([
-            'message' => 'Order status updated successfully!'
+            'message' => 'Order status updated successfully!',
+            'order' => $order,
+            'success' => true
         ], 200);
     }
 

@@ -14,7 +14,12 @@ class UserController extends Controller
     public function edit($id)
     {
         $user = User::findOrFail($id);
-        return response()->json(['user' => $user], 200);
+        $rewards = $user->total_rewards;
+        return response()->json(['user' => $user,
+            'rewards' => $rewards,
+            'success' => true,
+            'message' => 'User fetched successfully'
+            ], 200);
     }
 
     /*public function changeURL() {
@@ -51,10 +56,13 @@ class UserController extends Controller
             $response = [
                 'message' => 'User updated successfully!',
                 'user' => $user,
+                'success' => true
             ];
             return response($response, 201);
         } else {
-            return response()->json(['error' => 'User not found!'], 404);
+            return response()->json(['error' => 'User not found!',
+                'success' => false
+            ], 401);
         }
     }
 
@@ -64,7 +72,6 @@ class UserController extends Controller
             'phone' => 'required',
         ]);
 
-        // $user = User::findOrFail($request->phone);
         $user = User::where('phone_number', $request->phone)->get();
 
         if (count($user) > 0) {
@@ -92,14 +99,22 @@ class UserController extends Controller
             $user = User::with('books.category')->where('id', $request->id)->withCount('books')->paginate($request->page);
             if($request->page >= 1 && $request->page <= $user->lastPage()) {
                 $user = User::with('books.category')->where('id', $request->id)->withCount('books')->paginate($request->page);
-                return response()->json(['user' => $user, 'pages' => $user->lastPage(),'found' => count($user->items())], 200);
+                return response()->json(['user' => $user, 'pages' => $user->lastPage(),'found' => count($user->items()),
+                    'success' => true,
+                    'message' => 'User books found successfully'
+                    ], 200);
             }
             else{
-                return response()->json(['error' => 'Page number does not exist!'], 400);
+                return response()->json(['error' => 'Page number does not exist!',
+                    'success' => false
+                    ], 400);
             }
         }else {
             $user = User::with('books.category')->where('id', $request->id)->withCount('books')->get();
-            return response()->json(['user' => $user], 200);
+            return response()->json(['user' => $user,
+                'success' => true,
+                'message' => 'User books found successfully'
+                ], 200);
         }
     }
 }

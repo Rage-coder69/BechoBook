@@ -32,7 +32,6 @@ Route::post('/getBooks', [BookController::class, 'getBooks'])->name('getBooks');
 //Route::get('/getBook/{id}', [ BookController::class, 'edit' ])->name('getBook');
 Route::delete('/deleteBook/{id}', [ BookController::class, 'destroy' ])->name('deleteBook');
 Route::post('/getFilteredBooks', [ BookController::class, 'filteredBooks' ])->name('getBook');
-
 Route::get('/getCategories', [CategoryController::class, 'index'])->name('getCategories');
 
 /*Route::post('/addPdf', [ PdfController::class, 'store' ])->name('addPdf');

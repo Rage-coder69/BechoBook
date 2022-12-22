@@ -10,14 +10,14 @@ class Orders extends Model
     protected $guarded = [];
     use HasFactory;
 
-    public function users()
+    public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    public function products()
+    public function orderedProduct()
     {
-        return $this->hasMany(Products::class);
+        return $this->hasOne(Products::class, 'id', 'product_id');
     }
 
 }

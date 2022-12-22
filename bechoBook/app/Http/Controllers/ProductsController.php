@@ -12,7 +12,9 @@ class ProductsController extends Controller
     {
         $products = Products::all();
         return response()->json([
-            'products' => $products
+            'products' => $products,
+            'success' => true,
+            'message' => 'Products fetched successfully'
         ], 200);
     }
 
@@ -26,7 +28,10 @@ class ProductsController extends Controller
         ];
         $validate = Validator::make($request->all(), $rules);
         if ($validate->fails()) {
-            return response()->json(['error' => $validate->errors()], 401);
+            return response()->json(['error' => $validate->errors(),
+                'success' => false,
+                'message' => 'Validation error'
+                ], 401);
         }
         $product = new Products();
 
@@ -38,9 +43,11 @@ class ProductsController extends Controller
         $product->product_description = $request->product_description;
         $product->product_amount = $request->product_amount;
         $product->save();
-        
+
         return response()->json([
-            'product' => $product
+            'product' => $product,
+            'success' => true,
+            'message' => 'Product created successfully'
         ], 200);
     }
 
@@ -51,11 +58,15 @@ class ProductsController extends Controller
         ];
         $validate = Validator::make($request->all(), $rules);
         if ($validate->fails()) {
-            return response()->json(['error' => $validate->errors()], 401);
+            return response()->json(['error' => $validate->errors(),
+                'success' => false,
+                'message' => 'Validation error'
+                ], 401);
         }
         $product = Products::findOrFail($request->id);
         $product->delete();
         return response()->json([
+            'success' => true,
             'message' => 'Product deleted successfully!'
         ], 200);
     }

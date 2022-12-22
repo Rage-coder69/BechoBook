@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Rewards;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -20,15 +21,31 @@ class RewardsController extends Controller
         ];
         $validate = Validator::make($request->all(), $rules);
         if ($validate->fails()) {
-            return response()->json(['error' => $validate->errors()], 401);
+            return response()->json(['error' => $validate->errors(),
+                'success' => false,
+                'message' => 'Validation error'
+                ], 401);
         }
         $reward = Rewards::create($request->all());
-        return response()->json(['reward' => $reward], 200);
+        if ($reward) {
+            // update the user's total reward points
+            $user = User::findOrFail($request->user_id);
+            User::where('id', '=', $request->user_id)->update([
+                'total_rewards' => $user->total_rewards + $request->reward_amount
+            ]);
+        }
+        return response()->json(['reward' => $reward,
+            'success' => true,
+            'message' => 'Reward created successfully'
+            ], 200);
     }
 
     public function index(){
         $rewards = Rewards::all();
-        return response()->json(['rewards' => $rewards], 200);
+        return response()->json(['rewards' => $rewards,
+            'success' => true,
+            'message' => 'Rewards fetched successfully'
+            ], 200);
     }
 
     public function getUserReward(Request $request){
@@ -37,11 +54,18 @@ class RewardsController extends Controller
         ];
         $validate = Validator::make($request->all(), $rules);
         if ($validate->fails()) {
-            return response()->json(['error' => $validate->errors()], 401);
+            return response()->json(['error' => $validate->errors(),
+                'success' => false,
+                'message' => 'Validation error'
+                ], 401);
         }
-        $reward = Rewards::with('user')->where('user_id', $request->user_id)->get();
-        $totalRewardAmount = Rewards::where('user_id', $request->user_id)->sum('reward_amount');
-        return response()->json(['reward' => $reward, 'totalRewardAmount' => $totalRewardAmount], 200);
+        $rewards = Rewards::with('user')->where('user_id', $request->user_id)->get();
+        $totalRewardAmount = User::where('user_id', $request->user_id)->get('total_rewards');
+
+        return response()->json(['reward' => $rewards, 'total_rewards' => $totalRewardAmount,
+            'success' => true,
+            'message' => 'Rewards fetched successfully'
+            ], 200);
     }
 
 

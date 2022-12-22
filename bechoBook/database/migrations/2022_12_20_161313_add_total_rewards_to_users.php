@@ -13,11 +13,8 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('ordered_product', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('order_id')->constrained("orders");
-            $table->foreignId('product_id')->constrained("products");
-            $table->timestamps();
+        Schema::table('users', function (Blueprint $table) {
+            $table->double('total_rewards')->after('profile_picture')->default(0);
         });
     }
 
@@ -28,6 +25,8 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('ordered_product');
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('total_rewards');
+        });
     }
 };

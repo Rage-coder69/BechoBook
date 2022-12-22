@@ -25,14 +25,22 @@ class BookController extends Controller
             $books = Book::with('category', 'user')->paginate(30);
             if($request->page >= 1 && $request->page <= $books->lastPage()) {
                 $books = Book::with('category', 'user')->orderBy('id', 'desc')->paginate(30, ['*'], 'page', $request->page);
-                return response()->json(['books' => $books, 'pages' => $books->lastPage(), 'found' => count($books->items())], 200);
+                return response()->json(['books' => $books, 'pages' => $books->lastPage(), 'found' => count($books->items()),
+                    'success' => true,
+                    'message' => 'Books fetched successfully'
+                ], 200);
             }
             else{
-                return response()->json(['error' => 'Page number does not exist!'], 400);
+                return response()->json(['error' => 'Page number does not exist!',
+                    'success' => false
+                ], 400);
             }
         }else {
             $books = Book::with('category', 'user')->orderBy('id', 'desc')->get();
-            return response()->json(['books' => $books, 'found' => $books->count()], 200);
+            return response()->json(['books' => $books, 'found' => $books->count(),
+                'success' => true,
+                'message' => 'Books fetched successfully'
+            ], 200);
         }
     }
 
@@ -54,7 +62,10 @@ class BookController extends Controller
     public function edit($id): \Illuminate\Http\JsonResponse
     {
         $book = Book::with('category', 'user')->findOrFail($id);
-        return response()->json(['book' => $book], 200);
+        return response()->json(['book' => $book,
+            'success' => true,
+            'message' => 'Book fetched successfully'
+        ], 200);
     }
 
     public function store(Request $request): \Illuminate\Http\JsonResponse
@@ -110,38 +121,73 @@ class BookController extends Controller
         }
         $book->user_id = $request->user_id;
         $book->save();
-        return response()->json(['message' => 'Book Added Successfully!'], 200);
+        return response()->json(['message' => 'Book Added Successfully!',
+            'success' => true,
+        ], 200);
     }
 
     public function destroy($id): \Illuminate\Http\JsonResponse
     {
-       $book = Book::find($id);
+        $book = Book::find($id);
         if ($book) {
             foreach ($book->book_images as $book_image) {
                 $imagePath = parse_url($book_image);
                 File::delete(public_path($imagePath['path']));
             }
             $book->delete();
-            return response()->json(['message' => 'Book Deleted Successfully!'], 200);
+            return response()->json(['message' => 'Book Deleted Successfully!',
+                'success' => true,
+            ], 200);
         } else {
-            return response()->json(['message' => 'Book Not Found!'], 404);
+            return response()->json(['message' => 'Book Not Found!',
+                'success' => false,
+            ], 404);
         }
     }
 
     public function filteredBooks(Request $request): \Illuminate\Http\JsonResponse
     {
-        if($request->filled('page') && !empty($request->page)){
-            $books = Book::with('category', 'user')->where('category_id', $request->id)->where('book_title','like', '%'.$request->name.'%')->where('author_name', 'like', '%'.$request->author_name.'%')->paginate(30);
+        /*if($request->filled('page') && !empty($request->page)){
+            $books = Book::with('category', 'user')->where('category_id','=', $request->id)->where('book_title','like', '%'.$request->name.'%')->where('author_name', 'like', '%'.$request->author_name.'%')->paginate(30);
             if($request->page >= 1 && $request->page <= $books->lastPage()) {
-                $books = Book::with('category', 'user')->where('category_id', 'like','%'.$request->id.'%')->where('book_title','like', '%'.$request->name.'%')->where('author_name', 'like', '%'.$request->author_name.'%')->paginate(30);
-                return response()->json(['books' => $books, 'pages' => $books->lastPage(),'found' => count($books->items())], 200);
+                $books = Book::with('category', 'user')->orderBy('id', 'desc')->where('category_id', 'like','%'.$request->id.'%')->where('book_title','like', '%'.$request->name.'%')->where('author_name', 'like', '%'.$request->author_name.'%')->paginate(30);
+                return response()->json(['books' => $books, 'pages' => $books->lastPage(),'found' => count($books->items()),
+                    'success' => true,
+                    'message' => 'Books fetched successfully'
+                ], 200);
             }
             else{
-                return response()->json(['error' => 'Page number does not exist!'], 400);
+                return response()->json(['error' => 'Page number does not exist!',
+                    'success' => false,
+                    'message' => 'Books fetched successfully'
+                ], 400);
             }
-        }else {
-            $books = Book::with('category', 'user')->where('category_id', 'like','%'.$request->id.'%')->where('book_title','like', '%'.$request->name.'%')->where('author_name', 'like', '%'.$request->author_name.'%')->get();
-            return response()->json(['books' => $books], 200);
+        }*/
+        $id = $request->id;
+        $bookTitle = $request->book_title;
+        $author_name = $request->author_name;
+        if($request->has('id')){
+            error_log($request->id);
+            $books = Book::with('category', 'user')->where('category_id', $request->id)
+                ->where(function($query) use ($author_name, $bookTitle) {
+                    $query->where('book_title', 'like', "%$bookTitle%")
+                        ->orWhere('author_name', 'like', "%$author_name%");
+                })->get();
+            return response()->json(['books' => $books, 'found' => $books->count(),
+                'success' => true,
+                'message' => 'Books fetched successfully'
+            ], 200);
+        }
+        else{
+            //$books = Book::with('category', 'user')->where('book_title','like', '%'.$request->name.'%')->orWhere('author_name', 'like', '%'.$request->author_name.'%')->orderBy('id', 'desc')->get();
+            $books = Book::with('category', 'user')->where('book_title', $request->book_title)
+                ->where(function($query) use ($author_name) {
+                    $query->where('author_name', 'like', "%$author_name%");
+                })->get();
+            return response()->json(['books' => $books, 'found' => $books->count(),
+                'success' => true,
+                'message' => 'Books fetched successfully'
+            ], 200);
         }
     }
 }

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained("users");
             $table->string('reward_type');
-            $table->dateTime('time');
+            $table->string('time');
             $table->double('reward_amount');
             $table->string('refer_name');
             $table->string('reward_description');
