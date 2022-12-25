@@ -26,18 +26,25 @@ class RewardsController extends Controller
                 'message' => 'Validation error'
                 ], 401);
         }
-        $reward = Rewards::create($request->all());
-        if ($reward) {
-            // update the user's total reward points
-            $user = User::findOrFail($request->user_id);
-            User::where('id', '=', $request->user_id)->update([
-                'total_rewards' => $user->total_rewards + $request->reward_amount
-            ]);
-        }
-        return response()->json(['reward' => $reward,
-            'success' => true,
-            'message' => 'Reward created successfully'
+        $user = User::find($request->user_id);
+        if($user){
+            $reward = Rewards::create($request->all());
+            if ($reward) {
+                // update the user's total reward points
+                User::where('id', '=', $request->user_id)->update([
+                    'total_rewards' => $user->total_rewards + $request->reward_amount
+                ]);
+            }
+            return response()->json(['reward' => $reward,
+                'success' => true,
+                'message' => 'Reward created successfully'
             ], 200);
+        } else {
+            return response()->json(['error' => 'User not found',
+                'success' => false,
+                'message' => 'User not found'
+            ], 401);
+        }
     }
 
     public function index(){
