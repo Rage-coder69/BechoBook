@@ -88,7 +88,7 @@ class OrdersController extends Controller
             return response()->json(['error' => $validate->errors(),
                 'success' => false], 401);
         }
-        $orders = Orders::with('user')->where('user_id', $request->user_id)->get();
+        $orders = Orders::with('user', 'orderedProduct')->where('user_id', $request->user_id)->get();
         return response()->json([
             'orders' => $orders,
             'success' => true

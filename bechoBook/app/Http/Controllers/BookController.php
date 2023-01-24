@@ -147,7 +147,7 @@ class BookController extends Controller
 
     public function filteredBooks(Request $request): \Illuminate\Http\JsonResponse
     {
-        /*if($request->filled('page') && !empty($request->page)){
+        if($request->filled('page') && !empty($request->page)){
             $books = Book::with('category', 'user')->where('category_id','=', $request->id)->where('book_title','like', '%'.$request->name.'%')->where('author_name', 'like', '%'.$request->author_name.'%')->paginate(30);
             if($request->page >= 1 && $request->page <= $books->lastPage()) {
                 $books = Book::with('category', 'user')->orderBy('id', 'desc')->where('category_id', 'like','%'.$request->id.'%')->where('book_title','like', '%'.$request->name.'%')->where('author_name', 'like', '%'.$request->author_name.'%')->paginate(30);
@@ -162,12 +162,12 @@ class BookController extends Controller
                     'message' => 'Books fetched successfully'
                 ], 400);
             }
-        }*/
-        $id = $request->id;
+        }
+
+        /*$id = $request->id;
         $bookTitle = $request->book_title;
         $author_name = $request->author_name;
         if($request->has('id')){
-            error_log($request->id);
             $books = Book::with('category', 'user')->where('category_id', $request->id)
                 ->where(function($query) use ($author_name, $bookTitle) {
                     $query->where('book_title', 'like', "%$bookTitle%")
@@ -188,6 +188,6 @@ class BookController extends Controller
                 'success' => true,
                 'message' => 'Books fetched successfully'
             ], 200);
-        }
+        }*/
     }
 }

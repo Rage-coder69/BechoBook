@@ -10,7 +10,7 @@ class ProductsController extends Controller
 {
     public function index()
     {
-        $products = Products::all();
+        $products = Products::where('is_active', "yes")->get();
         return response()->json([
             'products' => $products,
             'success' => true,
@@ -64,7 +64,8 @@ class ProductsController extends Controller
                 ], 401);
         }
         $product = Products::findOrFail($request->id);
-        $product->delete();
+        $product->is_active = 'no';
+        $product->save();
         return response()->json([
             'success' => true,
             'message' => 'Product deleted successfully!'
