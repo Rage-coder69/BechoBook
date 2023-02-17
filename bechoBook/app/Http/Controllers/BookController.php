@@ -145,23 +145,63 @@ class BookController extends Controller
         }
     }
 
+    public function haversineGreatCircleDistance($latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo) {
+        $latFrom = deg2rad($latitudeFrom);
+        $lonFrom = deg2rad($longitudeFrom);
+        $latTo = deg2rad($latitudeTo);
+        $lonTo = deg2rad($longitudeTo);
+
+        $latDelta = $latTo - $latFrom;
+        $lonDelta = $lonTo - $lonFrom;
+
+        $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) + cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
+
+        return $angle * 6371;
+    }
+
+/*    // calculate the distances using the Haversine formula
+foreach ($books as $book) {
+$book->distance = $this->haversineGreatCircleDistance($request->$request->user_lat, $request->user_long, $book->location_latitude, $book->location_longitude);
+}
+
+// sort the books according to the distance
+$books = $books->sortBy('distance');*/
+
     public function filteredBooks(Request $request): \Illuminate\Http\JsonResponse
     {
         if($request->filled('page') && !empty($request->page)){
-            $books = Book::with('category', 'user')->where('category_id','=', $request->id)->where('book_title','like', '%'.$request->name.'%')->where('author_name', 'like', '%'.$request->author_name.'%')->paginate(30);
-            if($request->page >= 1 && $request->page <= $books->lastPage()) {
-                $books = Book::with('category', 'user')->orderBy('id', 'desc')->where('category_id', 'like','%'.$request->id.'%')->where('book_title','like', '%'.$request->name.'%')->where('author_name', 'like', '%'.$request->author_name.'%')->paginate(30);
-                return response()->json(['books' => $books, 'pages' => $books->lastPage(),'found' => count($books->items()),
+            $books = Book::with('category', 'user')->where('category_id','=', $request->id)->where('book_title','like', '%'.$request->name.'%')->where('author_name', 'like', '%'.$request->author_name.'%')->get();
+            /*if($request->page >= 1 && $request->page <= $books->lastPage()) {*/
+                foreach ($books as $book) {
+                    $book->distance = $this->haversineGreatCircleDistance($request->user_lat, $request->user_long, $book->location_latitude, $book->location_longitude);
+                }
+
+                $books = $books->sortBy('distance');
+                // paginate the books
+                $books = $books->forPage($request->page, 30);
+
+                return response()->json(['books' => $books, 'page' =>  $request->page, 'found' => $books->count(),
                     'success' => true,
                     'message' => 'Books fetched successfully'
                 ], 200);
-            }
+            /*}
             else{
                 return response()->json(['error' => 'Page number does not exist!',
                     'success' => false,
                     'message' => 'Books fetched successfully'
                 ], 400);
+            }*/
+        }else {
+            $books = Book::with('category', 'user')->get();
+            foreach ($books as $book) {
+                $book->distance = $this->haversineGreatCircleDistance($request->user_lat, $request->user_long, $book->location_latitude, $book->location_longitude);
             }
+
+            $books = $books->sortBy('distance');
+            return response()->json(['books' => $books, 'found' => $books->count(),
+                'success' => true,
+                'message' => 'Books fetched successfully'
+            ], 200);
         }
 
         /*$id = $request->id;
