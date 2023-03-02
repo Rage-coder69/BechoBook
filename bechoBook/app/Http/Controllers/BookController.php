@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
@@ -170,15 +171,30 @@ $books = $books->sortBy('distance');*/
 
     public function filteredBooks(Request $request): \Illuminate\Http\JsonResponse
     {
-        if($request->has('id') && $request->id == 0) {
-            $books = Book::with('category','user')->paginate();
+        $request->validate([
+            'user_lat' => 'required',
+            'user_long' => 'required',
+            'category_id' => 'nullable',
+            'author_name' => 'nullable',
+            'book_title' => 'nullable',
+        ]);
+
+        if($request->has('category_id') && $request->category_id == 0) {
+            $books = Book::with('category','user')->get();
             foreach ($books as $book) {
                 $book->distance = $this->haversineGreatCircleDistance($request->user_lat, $request->user_long, $book->location_latitude, $book->location_longitude);
             }
 
-            $books = $books->sortBy('distance');
+            $books = $books->sortBy([
+                ['distance', 'asc'],
+            ]);
+
             // paginate the books
-            $books = $books->paginate(30);
+            $currentPage = LengthAwarePaginator::resolveCurrentPage();
+            $perPage = 30;
+            $pagedData = $books->slice(($currentPage - 1) * $perPage, $perPage)->all();
+            $books = new \Illuminate\Pagination\LengthAwarePaginator($pagedData, count($books), $perPage, $currentPage);
+
             return response()->json(['books' => $books, 'found' => $books->count(),
                 'success' => true,
                 'message' => 'Books fetched successfully'
@@ -187,24 +203,22 @@ $books = $books->sortBy('distance');*/
 
         }else {
             //$books = Book::with('category', 'user')->where('category_id','=', $request->id)->where('book_title','like', '%'.$request->name.'%')->where('author_name', 'like', '%'.$request->author_name.'%')->get();
-            $books = DB::table('books')
-                ->when(request('id'), function ($query, $id) {
-                    return $query->where('category_id', $id);
-                })
-                ->when(request('author_name'), function ($query, $authorName) {
-                    return $query->where('author_name', $authorName);
-                })
-                ->when(request('book_title'), function ($query, $bookTitle) {
-                    return $query->where('book_title', $bookTitle);
-                })
-                ->get();
+            $books = Book::where('category_id','=', $request->category_id)->orWhere('book_title', 'like', '%'.$request->book_title.'%')->orWhere('author_name', 'like', '%'.$request->author_name.'%')->with('category', 'user')->get();
+
             foreach ($books as $book) {
                 $book->distance = $this->haversineGreatCircleDistance($request->user_lat, $request->user_long, $book->location_latitude, $book->location_longitude);
             }
 
-            $books = $books->sortBy('distance');
+            $books = $books->sortBy([
+                ['distance', 'asc'],
+            ]);
+
             // paginate the books
-            $books = $books->paginate(30);
+            $currentPage = LengthAwarePaginator::resolveCurrentPage();
+            $perPage = 30;
+            $pagedData = $books->slice(($currentPage - 1) * $perPage, $perPage)->all();
+            $books = new \Illuminate\Pagination\LengthAwarePaginator($pagedData, count($books), $perPage, $currentPage);
+
             return response()->json(['books' => $books, 'found' => $books->count(),
                 'success' => true,
                 'message' => 'Books fetched successfully'
