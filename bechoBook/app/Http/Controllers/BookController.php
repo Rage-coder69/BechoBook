@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
@@ -169,65 +170,45 @@ $books = $books->sortBy('distance');*/
 
     public function filteredBooks(Request $request): \Illuminate\Http\JsonResponse
     {
-        if($request->filled('page') && !empty($request->page)){
-            $books = Book::with('category', 'user')->where('category_id','=', $request->id)->where('book_title','like', '%'.$request->name.'%')->where('author_name', 'like', '%'.$request->author_name.'%')->get();
-            /*if($request->page >= 1 && $request->page <= $books->lastPage()) {*/
-                foreach ($books as $book) {
-                    $book->distance = $this->haversineGreatCircleDistance($request->user_lat, $request->user_long, $book->location_latitude, $book->location_longitude);
-                }
-
-                $books = $books->sortBy('distance');
-                // paginate the books
-                $books = $books->forPage($request->page, 30);
-
-                return response()->json(['books' => $books, 'page' =>  $request->page, 'found' => $books->count(),
-                    'success' => true,
-                    'message' => 'Books fetched successfully'
-                ], 200);
-            /*}
-            else{
-                return response()->json(['error' => 'Page number does not exist!',
-                    'success' => false,
-                    'message' => 'Books fetched successfully'
-                ], 400);
-            }*/
-        }else {
-            $books = Book::with('category', 'user')->get();
+        if($request->has('id') && $request->id == 0) {
+            $books = Book::with('category','user')->paginate();
             foreach ($books as $book) {
                 $book->distance = $this->haversineGreatCircleDistance($request->user_lat, $request->user_long, $book->location_latitude, $book->location_longitude);
             }
 
             $books = $books->sortBy('distance');
+            // paginate the books
+            $books = $books->paginate(30);
             return response()->json(['books' => $books, 'found' => $books->count(),
                 'success' => true,
                 'message' => 'Books fetched successfully'
             ], 200);
-        }
 
-        /*$id = $request->id;
-        $bookTitle = $request->book_title;
-        $author_name = $request->author_name;
-        if($request->has('id')){
-            $books = Book::with('category', 'user')->where('category_id', $request->id)
-                ->where(function($query) use ($author_name, $bookTitle) {
-                    $query->where('book_title', 'like', "%$bookTitle%")
-                        ->orWhere('author_name', 'like', "%$author_name%");
-                })->get();
+
+        }else {
+            //$books = Book::with('category', 'user')->where('category_id','=', $request->id)->where('book_title','like', '%'.$request->name.'%')->where('author_name', 'like', '%'.$request->author_name.'%')->get();
+            $books = DB::table('books')
+                ->when(request('id'), function ($query, $id) {
+                    return $query->where('category_id', $id);
+                })
+                ->when(request('author_name'), function ($query, $authorName) {
+                    return $query->where('author_name', $authorName);
+                })
+                ->when(request('book_title'), function ($query, $bookTitle) {
+                    return $query->where('book_title', $bookTitle);
+                })
+                ->get();
+            foreach ($books as $book) {
+                $book->distance = $this->haversineGreatCircleDistance($request->user_lat, $request->user_long, $book->location_latitude, $book->location_longitude);
+            }
+
+            $books = $books->sortBy('distance');
+            // paginate the books
+            $books = $books->paginate(30);
             return response()->json(['books' => $books, 'found' => $books->count(),
                 'success' => true,
                 'message' => 'Books fetched successfully'
             ], 200);
         }
-        else{
-            //$books = Book::with('category', 'user')->where('book_title','like', '%'.$request->name.'%')->orWhere('author_name', 'like', '%'.$request->author_name.'%')->orderBy('id', 'desc')->get();
-            $books = Book::with('category', 'user')->where('book_title', $request->book_title)
-                ->where(function($query) use ($author_name) {
-                    $query->where('author_name', 'like', "%$author_name%");
-                })->get();
-            return response()->json(['books' => $books, 'found' => $books->count(),
-                'success' => true,
-                'message' => 'Books fetched successfully'
-            ], 200);
-        }*/
     }
 }

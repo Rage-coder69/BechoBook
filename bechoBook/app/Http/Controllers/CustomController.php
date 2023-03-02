@@ -50,7 +50,7 @@ class CustomController extends Controller
                 $isEnable = false;
             }
 
-            $user = User::all();
+           // $user = User::all();
 
             return response()->json([
                 'message' => 'Values updated successfully',
@@ -59,7 +59,7 @@ class CustomController extends Controller
                 'title' => $customModel->title,
                 'description' => $customModel->description,
                 'image' => $customModel->image,
-                'users' => $user
+               // 'users' => $user
             ]);
         }
     }
