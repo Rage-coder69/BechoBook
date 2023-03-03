@@ -161,14 +161,6 @@ class BookController extends Controller
         return $angle * 6371;
     }
 
-/*    // calculate the distances using the Haversine formula
-foreach ($books as $book) {
-$book->distance = $this->haversineGreatCircleDistance($request->$request->user_lat, $request->user_long, $book->location_latitude, $book->location_longitude);
-}
-
-// sort the books according to the distance
-$books = $books->sortBy('distance');*/
-
     public function filteredBooks(Request $request): \Illuminate\Http\JsonResponse
     {
         $request->validate([
