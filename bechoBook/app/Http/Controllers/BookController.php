@@ -184,8 +184,11 @@ class BookController extends Controller
             // paginate the books
             $currentPage = LengthAwarePaginator::resolveCurrentPage();
             $perPage = 30;
-            $pagedData = $books->slice(($currentPage - 1) * $perPage, $perPage)->all();
-            $books = new \Illuminate\Pagination\LengthAwarePaginator($pagedData, count($books), $perPage, $currentPage);
+            $pagedData = $books->slice(($currentPage - 1) * $perPage, $perPage)->flatten()->all();
+            $books = new \Illuminate\Pagination\LengthAwarePaginator($pagedData, count($books), $perPage, $currentPage, [
+                'path' => LengthAwarePaginator::resolveCurrentPath(),
+                'pageName' => 'page',
+            ]);
 
             return response()->json(['books' => $books, 'found' => $books->count(),
                 'success' => true,
@@ -195,7 +198,37 @@ class BookController extends Controller
 
         }else {
             //$books = Book::with('category', 'user')->where('category_id','=', $request->id)->where('book_title','like', '%'.$request->name.'%')->where('author_name', 'like', '%'.$request->author_name.'%')->get();
-            $books = Book::where('category_id','=', $request->category_id)->orWhere('book_title', 'like', '%'.$request->book_title.'%')->orWhere('author_name', 'like', '%'.$request->author_name.'%')->with('category', 'user')->get();
+            //$books = Book::where('category_id', $request->category_id)->orWhere('book_title', 'like', '%'.$request->book_title.'%')->orWhere('author_name', 'like', '%'.$request->author_name.'%')->with('category', 'user')->get();
+            /*$query = "SELECT * FROM books";
+            $bindings = [];
+
+            if ($request->category_id) {
+                $query .= " WHERE category_id = ?";
+                $bindings[] = $request->category_id;
+            }
+
+            if ($request->book_title) {
+                $query .= ($request->category_id ? " AND" : " WHERE") . " book_title LIKE ?";
+                $bindings[] = '%' . $request->book_title . '%';
+            }
+
+            if ($request->author_name) {
+                $query .= ($request->category_id || $request->book_title ? " AND" : " WHERE") . " author_name LIKE ?";
+                $bindings[] = '%' . $request->author_name . '%';
+            }
+
+            $books = collect( DB::select(DB::raw($query), $bindings));*/
+            $books = Book::with('user', 'category')
+                ->when($request->category_id, function ($query) use ($request) {
+                    return $query->where('category_id', $request->category_id);
+                })
+                ->when($request->book_title, function ($query) use ($request) {
+                    return $query->where('book_title', 'like', '%'.$request->book_title.'%');
+                })
+                ->when($request->author_name, function ($query) use ($request) {
+                    return $query->where('author_name', 'like', '%'.$request->author_name.'%');
+                })
+                ->get();
 
             foreach ($books as $book) {
                 $book->distance = $this->haversineGreatCircleDistance($request->user_lat, $request->user_long, $book->location_latitude, $book->location_longitude);
@@ -208,12 +241,16 @@ class BookController extends Controller
             // paginate the books
             $currentPage = LengthAwarePaginator::resolveCurrentPage();
             $perPage = 30;
-            $pagedData = $books->slice(($currentPage - 1) * $perPage, $perPage)->all();
-            $books = new \Illuminate\Pagination\LengthAwarePaginator($pagedData, count($books), $perPage, $currentPage);
+            // added flatten to remove the numeric keys of the objects
+            $pagedData = $books->slice(($currentPage - 1) * $perPage, $perPage)->flatten()->all();
+            $books = new \Illuminate\Pagination\LengthAwarePaginator($pagedData, count($books), $perPage, $currentPage, [
+                'path' => LengthAwarePaginator::resolveCurrentPath(),
+                'pageName' => 'page',
+            ]);
 
             return response()->json(['books' => $books, 'found' => $books->count(),
                 'success' => true,
-                'message' => 'Books fetched successfully'
+                'message' => 'Books fetched successfully',
             ], 200);
         }
     }
