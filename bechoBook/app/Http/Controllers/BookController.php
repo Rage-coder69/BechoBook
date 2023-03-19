@@ -146,18 +146,6 @@ class BookController extends Controller
 
     public function point2point($lat1, $lon1, $lat2, $lon2): float|int
     {
-        /*$latFrom = deg2rad($latitudeFrom);
-        $lonFrom = deg2rad($longitudeFrom);
-        $latTo = deg2rad($latitudeTo);
-        $lonTo = deg2rad($longitudeTo);
-
-        $latDelta = $latTo - $latFrom;
-        $lonDelta = $lonTo - $lonFrom;
-
-        $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) + cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
-
-        return $angle * 6371;*/
-
         $theta = $lon1 - $lon2;
         $dist = sin(deg2rad($lat1)) * sin(deg2rad($lat2)) +  cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * cos(deg2rad($theta));
         $dist = acos($dist);
@@ -237,7 +225,7 @@ class BookController extends Controller
                 ->get();
 
             foreach ($books as $book) {
-                $book->distance = $this->haversineGreatCircleDistance($request->user_lat, $request->user_long, $book->location_latitude, $book->location_longitude);
+                $book->distance = $this->point2point($request->user_lat, $request->user_long, $book->location_latitude, $book->location_longitude);
             }
 
             $books = $books->sortBy([
