@@ -5,12 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Book;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
-use function PHPUnit\Framework\isEmpty;
-use function PHPUnit\Framework\isNull;
 
 class BookController extends Controller
 {
@@ -147,8 +144,9 @@ class BookController extends Controller
         }
     }
 
-    public function haversineGreatCircleDistance($latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo) {
-        $latFrom = deg2rad($latitudeFrom);
+    public function point2point($lat1, $lon1, $lat2, $lon2): float|int
+    {
+        /*$latFrom = deg2rad($latitudeFrom);
         $lonFrom = deg2rad($longitudeFrom);
         $latTo = deg2rad($latitudeTo);
         $lonTo = deg2rad($longitudeTo);
@@ -158,7 +156,15 @@ class BookController extends Controller
 
         $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) + cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
 
-        return $angle * 6371;
+        return $angle * 6371;*/
+
+        $theta = $lon1 - $lon2;
+        $dist = sin(deg2rad($lat1)) * sin(deg2rad($lat2)) +  cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * cos(deg2rad($theta));
+        $dist = acos($dist);
+        $dist = rad2deg($dist);
+        $miles = $dist * 60 * 1.1515;
+
+        return ($miles * 1.609344);
     }
 
     public function filteredBooks(Request $request): \Illuminate\Http\JsonResponse
@@ -174,7 +180,7 @@ class BookController extends Controller
         if($request->has('category_id') && $request->category_id == 0) {
             $books = Book::with('category','user')->get();
             foreach ($books as $book) {
-                $book->distance = $this->haversineGreatCircleDistance($request->user_lat, $request->user_long, $book->location_latitude, $book->location_longitude);
+                $book->distance = $this->point2point($request->user_lat, $request->user_long, $book->location_latitude, $book->location_longitude);
             }
 
             $books = $books->sortBy([
